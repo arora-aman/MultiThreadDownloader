@@ -71,6 +71,14 @@ interface IMultiThreadDownloader {
     fun download(webAddress: String, maxThreadCount: Int, file: File?, eventListener: OnDownloadEventListener): Long
 
     /**
+     * @return Download Information for a download with the given <code>id</code>.
+     *
+     * @exception IllegalArgumentException If a download with <code>id</code> is not found.
+     */
+    @Throws(IllegalArgumentException:: class)
+    fun getDownloadInfo(id: Long): DownloadInfo
+
+    /**
      * @param id Id of the download.
      *
      * @return True if the the location of the downloaded content can be changed i.e. when
