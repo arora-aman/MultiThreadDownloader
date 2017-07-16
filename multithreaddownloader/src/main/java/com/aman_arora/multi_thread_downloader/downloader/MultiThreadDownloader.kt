@@ -8,6 +8,7 @@ import java.io.IOException
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
+import kotlin.collections.set
 
 object MultiThreadDownloader : IMultiThreadDownloader {
 
@@ -43,18 +44,15 @@ object MultiThreadDownloader : IMultiThreadDownloader {
 
         val id = downloadIdMap.size.toLong()
         val urlDetails = UrlDetails(webAddress)
-        val info = DownloadInfo(id, urlDetails.fileName, maxThreadCount, webAddress)
+        val threads: Int = if (urlDetails.contentLength == NO_CONTENT_LENGTH_CONSTANT) 1 else maxThreadCount
+        val info = DownloadInfo(id, urlDetails.fileName, threads, webAddress)
         info.downloadFile = file ?: fileManager!!.createFile(urlDetails.fileName)
         downloadIdMap.put(id, info)
 
         listenerMap[id] = eventListener
 
         setDownloadState(info, IMultiThreadDownloader.DownloadState.STARTING)
-        if (urlDetails.contentLength == NO_CONTENT_LENGTH_CONSTANT) {
-            // TODO
-        } else {
-            addDownloadTasks(info, urlDetails, fileManager!!)
-        }
+        addDownloadTasks(info, urlDetails, fileManager!!)
 
         return downloadIdMap.size.toLong()
     }
@@ -87,7 +85,12 @@ object MultiThreadDownloader : IMultiThreadDownloader {
         val listener = OnPartsDownloadEventListener(downloadInfo)
 
         var startByte = 0L
-        var endByte = partSize - 1
+        var endByte: Long? = null
+
+        if (urlDetails.contentLength != NO_CONTENT_LENGTH_CONSTANT) {
+            endByte = partSize - 1
+        }
+
         for (i in 1..threadCount) {
             val part = fileManager.createPartFile(urlDetails.fileName, i)
             part.delete()
@@ -95,10 +98,12 @@ object MultiThreadDownloader : IMultiThreadDownloader {
 
             val task = DownloadTask(urlDetails.webUrl, i, startByte, endByte, part, listener)
 
-            startByte = endByte + 1
-            endByte += partSize
-            if (i == threadCount - 1) {
-                endByte = urlDetails.contentLength - 1
+            if (urlDetails.contentLength != NO_CONTENT_LENGTH_CONSTANT) {
+                startByte = endByte!! + 1
+                endByte += partSize
+                if (i == threadCount - 1) {
+                    endByte = urlDetails.contentLength - 1
+                }
             }
 
             mExecutor.execute(task)
