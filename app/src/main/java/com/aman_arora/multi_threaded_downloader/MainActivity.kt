@@ -8,7 +8,6 @@ import com.aman_arora.multi_thread_downloader.downloader.IMultiThreadDownloader
 import com.aman_arora.multi_thread_downloader.downloader.MultiThreadDownloader
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.download_item.*
-import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
 
@@ -32,7 +31,7 @@ class MainActivity : AppCompatActivity() {
             }
 
 //            setContentView(layout)
-            id = startDownload("https://farm5.staticflickr.com/4179/33980954480_03567cffb8_o_d.jpg", progressBarList)
+            id = startDownload("https://qc3.androidfilehost.com/dl/yeZ_zL20imYvxpkDn69sdQ/1501657008/817550096634789471/lineage-14.1-20170730-UNOFFICIAL-j5ltexx.zip", progressBarList)
         }
         pause.setOnClickListener {
             Log.d("PAUSING" , "${getDownloadId()}")
@@ -48,9 +47,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun startDownload(url: String, progressBarList: List<ProgressBar>) : Long {
-        var id: Long = -1
-        Executors.newSingleThreadExecutor().execute {
-            id = downloader.download(url, 5, null, object : IMultiThreadDownloader.OnDownloadEventListener {
+        return downloader.download(url, 5, null, object : IMultiThreadDownloader.OnDownloadEventListener {
                 override fun onDownloadStateChanged(id: Long, state: IMultiThreadDownloader.DownloadState) {
                     Log.d("Tag", state.name)
                 }
@@ -60,9 +57,6 @@ class MainActivity : AppCompatActivity() {
 //                    Log.d("Tag", "thread: $thread " + (progress * 100))
                 }
             })
-        }
-
-        return id
     }
 
     fun getDownloadId(): Long { return id }

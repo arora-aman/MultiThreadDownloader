@@ -1,5 +1,6 @@
 package com.aman_arora.multi_thread_downloader.downloader
 
+import android.util.Log
 import com.aman_arora.multi_thread_downloader.downloader.IDownloadTask.OnDownloadTaskEventListener
 import java.io.BufferedInputStream
 import java.io.File
@@ -19,6 +20,8 @@ internal class DownloadTask(val webUrl: URL, val thread: Int, val startByte: Lon
         if (endByte != null && this.startByte + partFile.length() >= endByte) {
             return
         }
+
+        Log.d("TAG", "$thread started")
 
         val httpConnection = getHttpConnection(this.startByte + partFile.length(), endByte)
         httpConnection.connect()
