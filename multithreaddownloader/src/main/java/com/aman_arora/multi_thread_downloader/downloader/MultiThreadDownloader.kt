@@ -52,9 +52,9 @@ object MultiThreadDownloader : IMultiThreadDownloader {
         listenerMap[id] = eventListener
 
         setDownloadState(info, IMultiThreadDownloader.DownloadState.STARTING)
-        addDownloadTasks(info, urlDetails, fileManager!!)
+        addDownloadTasks(info, urlDetails, fileManager!!, true)
 
-        return downloadIdMap.size.toLong()
+        return id
     }
 
     override fun getDownloadInfo(id: Long): DownloadInfo {
@@ -63,6 +63,41 @@ object MultiThreadDownloader : IMultiThreadDownloader {
         }
 
         return downloadIdMap[id]!!
+    }
+
+    override fun pause(id: Long) {
+        if (!downloadIdMap.containsKey(id)) {
+            throw IMultiThreadDownloader.InvalidDownloadException(id)
+        }
+
+        val downloadInfo = downloadIdMap[id]!!
+
+        val downloadTaskList = downloadInfo.downloadTaskList
+
+        for (task in downloadTaskList) {
+            task.stopDownload()
+        }
+
+        downloadTaskList.clear()
+
+        val threadList = downloadInfo.threadList
+        for (thread in threadList) {
+            thread.join()
+        }
+
+        threadList.clear()
+        setDownloadState(downloadInfo, IMultiThreadDownloader.DownloadState.PAUSED)
+    }
+
+    override fun resume(id: Long) {
+        if (!downloadIdMap.containsKey(id)) {
+            throw IMultiThreadDownloader.InvalidDownloadException(id)
+        }
+        val downloadInfo = downloadIdMap[id]!!
+        setDownloadState(downloadInfo, IMultiThreadDownloader.DownloadState.RESTARTING)
+
+        val urlDetails = UrlDetails(downloadInfo.webAddress)
+        addDownloadTasks(downloadInfo, urlDetails, fileManager!!, false)
     }
 
     override fun isDownloadLocationChangeable(id: Long): Boolean {
@@ -86,7 +121,8 @@ object MultiThreadDownloader : IMultiThreadDownloader {
         downloadIdMap[id]!!.downloadFile = newFile
     }
 
-    private fun addDownloadTasks(downloadInfo: DownloadInfo, urlDetails: UrlDetails, fileManager: FileManager) {
+    private fun addDownloadTasks(downloadInfo: DownloadInfo, urlDetails: UrlDetails,
+                                 fileManager: FileManager, isNewDownload: Boolean) {
         val threadCount = downloadInfo.threads
 
         val partSize = urlDetails.contentLength / downloadInfo.threads
@@ -100,9 +136,7 @@ object MultiThreadDownloader : IMultiThreadDownloader {
         }
 
         for (i in 1..threadCount) {
-            val part = fileManager.createPartFile(urlDetails.fileName, i)
-            part.delete()
-            part.createNewFile()
+            val part = if (!isNewDownload) downloadInfo.partFileList[i - 1] else fileManager.createPartFile(urlDetails.fileName, i)
 
             val task = DownloadTask(urlDetails.webUrl, i, startByte, endByte, part, listener)
 
@@ -115,9 +149,11 @@ object MultiThreadDownloader : IMultiThreadDownloader {
             }
 
             mExecutor.execute(task)
-            downloadInfo.partFileList.add(part)
             downloadInfo.downloadTaskList.add(task)
-            downloadInfo.threadProgressList.add(0f)
+            if (isNewDownload) {
+                downloadInfo.partFileList.add(part)
+                downloadInfo.threadProgressList.add(0f)
+            }
         }
     }
 
@@ -137,6 +173,10 @@ object MultiThreadDownloader : IMultiThreadDownloader {
     }
 
     private class OnPartsDownloadEventListener(val downloadInfo: DownloadInfo) : IDownloadTask.OnDownloadTaskEventListener {
+        override fun onDownloadStarted(currentThread: Thread) {
+            downloadInfo.threadList.add(currentThread)
+        }
+
         override fun onProgressUpdated(thread: Int, progress: Float) {
             setProgress(downloadInfo, thread, progress)
             setDownloadState(downloadInfo, IMultiThreadDownloader.DownloadState.DOWNLOADING)

@@ -73,10 +73,28 @@ interface IMultiThreadDownloader {
     /**
      * @return Download Information for a download with the given <code>id</code>.
      *
-     * @exception IllegalArgumentException If a download with <code>id</code> is not found.
+     * @exception InvalidDownloadException If a download with <code>id</code> is not found.
      */
-    @Throws(IllegalArgumentException:: class)
+    @Throws(InvalidDownloadException:: class)
     fun getDownloadInfo(id: Long): DownloadInfo
+
+    /**
+     * Pauses the download with the given <code>id</code>.
+     *
+     * @throws InvalidDownloadException If a download with <code>id</code> is not found.
+     */
+    @Throws(IllegalArgumentException::class)
+    fun pause(id: Long)
+
+    /**
+     * Resumes the download with the given <code>id</code>.
+     *
+     * @throws InvalidDownloadException If a download with <code>id</code> is not found.
+     * @throws DownloadCantResumedException If the download can't be resumed and needs to be restarted.
+     */
+    @Throws(IllegalArgumentException::class, DownloadCantResumedException::class)
+    fun resume(id: Long)
+
 
     /**
      * @param id Id of the download.
@@ -124,4 +142,9 @@ interface IMultiThreadDownloader {
      */
     class InvalidDownloadException(id: Long) :
             IllegalArgumentException("Invalid download id: $id") {}
+
+    /**
+     * Exception thrown when the download can't be resumed.
+     */
+    class DownloadCantResumedException : RuntimeException() {}
 }
