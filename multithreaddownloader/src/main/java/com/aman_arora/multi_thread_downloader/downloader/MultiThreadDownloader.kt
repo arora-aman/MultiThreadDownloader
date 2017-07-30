@@ -5,7 +5,7 @@ import com.aman_arora.multi_thread_downloader.file_manager.FileManager
 import com.aman_arora.multi_thread_downloader.url_info.UrlDetails
 import java.io.File
 import java.io.IOException
-import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import kotlin.collections.set
@@ -14,7 +14,7 @@ object MultiThreadDownloader : IMultiThreadDownloader {
 
     private val NO_CONTENT_LENGTH_CONSTANT: Long = -1
 
-    private val mBlockingQueue = LinkedBlockingDeque<Runnable>()
+    private val mBlockingQueue = LinkedBlockingQueue<Runnable>()
     private val mExecutor = ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(), Int.MAX_VALUE,
             1, TimeUnit.SECONDS, mBlockingQueue)
     private val downloadIdMap = HashMap<Long, DownloadInfo>()
@@ -22,9 +22,11 @@ object MultiThreadDownloader : IMultiThreadDownloader {
 
     private var fileManager: FileManager? = null
     private var downloadFinalizer: DownloadFinalizer? = null
+    private var initialised = false
 
     override fun init(context: Context) {
-        if (fileManager == null) {
+        if (!initialised) {
+            initialised = true
             this.fileManager = FileManager(context)
             this.downloadFinalizer = DownloadFinalizer(fileManager!!)
         } else {
@@ -34,7 +36,7 @@ object MultiThreadDownloader : IMultiThreadDownloader {
 
     override fun download(webAddress: String, maxThreadCount: Int, file: File?,
                           eventListener: IMultiThreadDownloader.OnDownloadEventListener): Long {
-        if (fileManager == null) {
+        if (!initialised) {
             throw IllegalStateException()
         }
 
@@ -43,16 +45,20 @@ object MultiThreadDownloader : IMultiThreadDownloader {
         }
 
         val id = downloadIdMap.size.toLong()
-        val urlDetails = UrlDetails(webAddress)
-        val threads: Int = if (urlDetails.contentLength == NO_CONTENT_LENGTH_CONSTANT) 1 else maxThreadCount
-        val info = DownloadInfo(id, urlDetails.fileName, threads, webAddress)
-        info.downloadFile = file ?: fileManager!!.createFile(urlDetails.fileName)
-        downloadIdMap.put(id, info)
+        downloadIdMap.put(id, DownloadInfo(-1, "", -1, ""))
+        
+        mExecutor.execute {
+            val urlDetails = UrlDetails(webAddress)
+            val threads: Int = if (urlDetails.contentLength == NO_CONTENT_LENGTH_CONSTANT) 1 else maxThreadCount
+            val info = DownloadInfo(id, urlDetails.fileName, threads, webAddress)
+            info.downloadFile = file ?: fileManager!!.createFile(urlDetails.fileName)
+            downloadIdMap.put(id, info)
 
-        listenerMap[id] = eventListener
+            listenerMap[id] = eventListener
 
-        setDownloadState(info, IMultiThreadDownloader.DownloadState.STARTING)
-        addDownloadTasks(info, urlDetails, fileManager!!, true)
+            setDownloadState(info, IMultiThreadDownloader.DownloadState.STARTING)
+            addDownloadTasks(info, urlDetails, fileManager!!, true)
+        }
 
         return id
     }
