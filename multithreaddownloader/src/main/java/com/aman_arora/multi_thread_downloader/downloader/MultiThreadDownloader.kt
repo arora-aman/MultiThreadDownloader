@@ -43,16 +43,19 @@ object MultiThreadDownloader : IMultiThreadDownloader {
         }
 
         val id = downloadIdMap.size.toLong()
-        val urlDetails = UrlDetails(webAddress)
-        val threads: Int = if (urlDetails.contentLength == NO_CONTENT_LENGTH_CONSTANT) 1 else maxThreadCount
-        val info = DownloadInfo(id, urlDetails.fileName, threads, webAddress)
-        info.downloadFile = file ?: fileManager!!.createFile(urlDetails.fileName)
-        downloadIdMap.put(id, info)
 
-        listenerMap[id] = eventListener
+        mExecutor.execute {
+            val urlDetails = UrlDetails(webAddress)
+            val threads: Int = if (urlDetails.contentLength == NO_CONTENT_LENGTH_CONSTANT) 1 else maxThreadCount
+            val info = DownloadInfo(id, urlDetails.fileName, threads, webAddress)
+            info.downloadFile = file ?: fileManager!!.createFile(urlDetails.fileName)
+            downloadIdMap.put(id, info)
 
-        setDownloadState(info, IMultiThreadDownloader.DownloadState.STARTING)
-        addDownloadTasks(info, urlDetails, fileManager!!, true)
+            listenerMap[id] = eventListener
+
+            setDownloadState(info, IMultiThreadDownloader.DownloadState.STARTING)
+            addDownloadTasks(info, urlDetails, fileManager!!, true)
+        }
 
         return id
     }
