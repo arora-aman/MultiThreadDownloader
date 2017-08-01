@@ -6,6 +6,23 @@
     android:layout_height="match_parent"
     tools:context="com.aman_arora.multi_threaded_downloader.MainActivity">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/downloadList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <include
+            layout="@layout/layout_empty_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </LinearLayout>
+
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/addDownload"
         android:layout_width="wrap_content"
@@ -13,8 +30,6 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
         android:layout_margin="16dp"
-        android:src="@drawable/ic_plus_white"/>
-
-    <include layout="@layout/download_item" />
+        android:src="@drawable/ic_plus_white" />
 
 </RelativeLayout>
