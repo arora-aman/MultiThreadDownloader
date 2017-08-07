@@ -1,6 +1,9 @@
 package com.aman_arora.multi_thread_downloader.downloader
 
+import android.arch.persistence.room.Room
 import android.content.Context
+import com.aman_arora.multi_thread_downloader.db.Download
+import com.aman_arora.multi_thread_downloader.db.DownloadsDatabase
 import com.aman_arora.multi_thread_downloader.file_manager.FileManager
 import com.aman_arora.multi_thread_downloader.url_info.UrlDetails
 import java.io.File
@@ -8,7 +11,6 @@ import java.io.IOException
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import kotlin.collections.set
 
 object MultiThreadDownloader : IMultiThreadDownloader {
 
@@ -21,14 +23,20 @@ object MultiThreadDownloader : IMultiThreadDownloader {
     private val listenerMap = HashMap<Long, IMultiThreadDownloader.OnDownloadEventListener>()
 
     private var fileManager: FileManager? = null
+    private var database: DownloadsDatabase? = null
     private var downloadFinalizer: DownloadFinalizer? = null
     private var initialised = false
 
     override fun init(context: Context) {
         if (!initialised) {
             initialised = true
-            this.fileManager = FileManager(context)
-            this.downloadFinalizer = DownloadFinalizer(fileManager!!)
+            mExecutor.execute {
+                this.fileManager = FileManager(context)
+                this.database = Room.databaseBuilder(context, DownloadsDatabase::class.java, "downloads-database").build()
+                this.downloadFinalizer = DownloadFinalizer(fileManager!!)
+                
+                initDownloadMap()
+            }
         } else {
             throw IllegalStateException()
         }
@@ -57,6 +65,11 @@ object MultiThreadDownloader : IMultiThreadDownloader {
             listenerMap[id] = eventListener
 
             setDownloadState(info, IMultiThreadDownloader.DownloadState.STARTING)
+
+            val dao = database?.downloadDao()
+            val download = Download(id, webAddress, info.downloadFile!!.path, maxThreadCount)
+            dao?.addDownload(download)
+
             addDownloadTasks(info, urlDetails, fileManager!!, true)
         }
 
@@ -176,6 +189,16 @@ object MultiThreadDownloader : IMultiThreadDownloader {
     private fun setProgress(downloadInfo: DownloadInfo, thread: Int, progress: Float) {
         downloadInfo.threadProgressList.add(thread, progress)
         listenerMap[downloadInfo.id]!!.onDownloadProgressChanged(downloadInfo.id, thread, progress)
+    }
+
+    private fun initDownloadMap() {
+        val downloads = database?.downloadDao()?.getDownloads()
+        if (downloads != null) {
+            for (download in downloads) {
+                val downloadFile = File(download.file)
+                downloadIdMap[download.id] = DownloadInfo(download.id, downloadFile.name, download.threadCount, download.webUrl)
+            }
+        }
     }
 
     private class OnPartsDownloadEventListener(val downloadInfo: DownloadInfo) : IDownloadTask.OnDownloadTaskEventListener {
