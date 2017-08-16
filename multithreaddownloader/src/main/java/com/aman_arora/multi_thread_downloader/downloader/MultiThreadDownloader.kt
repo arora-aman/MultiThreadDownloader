@@ -8,6 +8,7 @@ import com.aman_arora.multi_thread_downloader.file_manager.FileManager
 import com.aman_arora.multi_thread_downloader.url_info.UrlDetails
 import java.io.File
 import java.io.IOException
+import java.util.*
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -52,8 +53,7 @@ object MultiThreadDownloader : IMultiThreadDownloader {
             throw IOException()
         }
 
-        val id = downloadIdMap.size.toLong()
-        downloadIdMap.put(id, DownloadInfo(-1, "", -1, ""))
+        val id = UUID.randomUUID().hashCode().toLong()
         
         mExecutor.execute {
             val urlDetails = UrlDetails(webAddress)
