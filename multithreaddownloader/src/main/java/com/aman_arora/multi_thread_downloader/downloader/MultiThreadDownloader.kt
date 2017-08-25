@@ -199,6 +199,7 @@ object MultiThreadDownloader : IMultiThreadDownloader {
             for (download in downloads) {
                 val downloadFile = File(download.file)
                 downloadIdMap[download.id] = DownloadInfo(download.id, downloadFile.name, download.threadCount, download.webUrl)
+                downloadIdMap[download.id]?.state = IMultiThreadDownloader.DownloadState.PAUSED
             }
         }
     }
