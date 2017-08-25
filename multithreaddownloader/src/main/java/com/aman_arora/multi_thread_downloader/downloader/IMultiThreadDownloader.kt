@@ -95,6 +95,13 @@ interface IMultiThreadDownloader {
     @Throws(IllegalArgumentException::class, DownloadCantResumedException::class)
     fun resume(id: Long)
 
+    /**
+     * @return A map of a DownloadId -> {@link DownloadInfo} for all downloads.
+     *
+     * @throws IllegalStateException If the download manager hasn't been initiated.
+     */
+    @Throws(IllegalStateException::class)
+    fun getAllDownloads() : Map<Long, DownloadInfo>
 
     /**
      * @param id Id of the download.

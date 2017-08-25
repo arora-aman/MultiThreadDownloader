@@ -121,6 +121,14 @@ object MultiThreadDownloader : IMultiThreadDownloader {
         }
     }
 
+    override fun getAllDownloads(): Map<Long, DownloadInfo> {
+        if (!initialised) {
+            throw IllegalStateException()
+        }
+
+        return downloadIdMap.toMap()
+    }
+
     override fun isDownloadLocationChangeable(id: Long): Boolean {
         if (!downloadIdMap.containsKey(id)) {
             throw IllegalArgumentException()
