@@ -115,8 +115,10 @@ object MultiThreadDownloader : IMultiThreadDownloader {
         val downloadInfo = downloadIdMap[id]!!
         setDownloadState(downloadInfo, IMultiThreadDownloader.DownloadState.RESTARTING)
 
-        val urlDetails = UrlDetails(downloadInfo.webAddress)
-        addDownloadTasks(downloadInfo, urlDetails, fileManager!!, false)
+        mExecutor.execute {
+            val urlDetails = UrlDetails(downloadInfo.webAddress)
+            addDownloadTasks(downloadInfo, urlDetails, fileManager!!, false)
+        }
     }
 
     override fun isDownloadLocationChangeable(id: Long): Boolean {
