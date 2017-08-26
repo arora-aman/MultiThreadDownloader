@@ -8,7 +8,7 @@ interface IDownloadsRepository {
     /**
      * Initialises the repository.
      */
-    fun init(context: Context)
+    fun init(context: Context): LiveData<Boolean>
 
     /**
      * Initiates download from the given <code>webAddress</code>.

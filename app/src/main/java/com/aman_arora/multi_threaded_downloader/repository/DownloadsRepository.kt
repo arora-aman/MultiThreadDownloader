@@ -1,6 +1,7 @@
 package com.aman_arora.multi_threaded_downloader.repository
 
 import android.arch.lifecycle.LiveData
+import android.arch.lifecycle.MutableLiveData
 import android.content.Context
 import android.util.Log
 import com.aman_arora.multi_thread_downloader.downloader.IMultiThreadDownloader
@@ -13,7 +14,9 @@ class DownloadsRepository: IDownloadsRepository {
     val downloader = MultiThreadDownloader
     val downloadsMap = HashMap<Long, Download>()
 
-    override fun init(context: Context) {
+    override fun init(context: Context): LiveData<Boolean> {
+        val inited = MutableLiveData<Boolean>()
+        inited.value = false
         downloader.init(context, object: IMultiThreadDownloader.OnDownloaderInitiatedEventListener {
             override fun onDownloaderInitiated() {
                 for ((key, downloadInfo) in downloader.getAllDownloads()) {
@@ -24,8 +27,11 @@ class DownloadsRepository: IDownloadsRepository {
                 }
 
                 Log.d(TAG, downloadsMap.toList().toString())
+                inited.value = true
             }
         })
+
+        return inited
     }
 
     override fun download(webAddress: String): Download {
