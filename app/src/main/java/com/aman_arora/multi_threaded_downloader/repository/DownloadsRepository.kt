@@ -27,7 +27,7 @@ class DownloadsRepository: IDownloadsRepository {
                 }
 
                 Log.d(TAG, downloadsMap.toList().toString())
-                inited.value = true
+                inited.postValue(true)
             }
         })
 
