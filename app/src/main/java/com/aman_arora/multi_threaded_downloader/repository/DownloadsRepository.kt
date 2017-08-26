@@ -14,15 +14,18 @@ class DownloadsRepository: IDownloadsRepository {
     val downloadsMap = HashMap<Long, Download>()
 
     override fun init(context: Context) {
-        downloader.init(context)
-        for ((key, downloadInfo) in downloader.getAllDownloads()) {
-            val download = Download(downloadInfo.id, downloadInfo.webAddress, downloadInfo.threads)
-            download.progressList.addAll(downloadInfo.getThreadProgressMap())
-            download.state = downloadInfo.getState()!!
-            downloadsMap.put(key, download)
-        }
+        downloader.init(context, object: IMultiThreadDownloader.OnDownloaderInitiatedEventListener {
+            override fun onDownloaderInitiated() {
+                for ((key, downloadInfo) in downloader.getAllDownloads()) {
+                    val download = Download(downloadInfo.id, downloadInfo.webAddress, downloadInfo.threads)
+                    download.progressList.addAll(downloadInfo.getThreadProgressMap())
+                    download.state = downloadInfo.getState()!!
+                    downloadsMap.put(key, download)
+                }
 
-        Log.d(TAG, downloadsMap.toList().toString())
+                Log.d(TAG, downloadsMap.toList().toString())
+            }
+        })
     }
 
     override fun download(webAddress: String): Download {

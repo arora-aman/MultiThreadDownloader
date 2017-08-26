@@ -48,11 +48,12 @@ interface IMultiThreadDownloader {
      * Initialise the downloader.
      *
      * @param context Application context.
+     * @param eventListener Called once the downloader has been initiated.
      *
      * @throws IllegalStateException If the downloader has already been initialised.
      */
     @Throws(IllegalArgumentException::class)
-    fun init(context: Context)
+    fun init(context: Context, eventListener: OnDownloaderInitiatedEventListener)
 
     /**
      * Download content from the internet on a number of concurrent threads.
@@ -123,6 +124,13 @@ interface IMultiThreadDownloader {
      */
     @Throws(InvalidDownloadException::class, IllegalStateException::class)
     fun changeDownloadLocation(id: Long, newFile: File)
+
+    interface OnDownloaderInitiatedEventListener {
+        /**
+         * Callback called when the downloader has been initiated.
+         */
+        fun onDownloaderInitiated()
+    }
 
     interface OnDownloadEventListener {
         /**

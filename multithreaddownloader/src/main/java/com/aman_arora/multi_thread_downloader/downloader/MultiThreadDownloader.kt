@@ -28,7 +28,7 @@ object MultiThreadDownloader : IMultiThreadDownloader {
     private var downloadFinalizer: DownloadFinalizer? = null
     private var initialised = false
 
-    override fun init(context: Context) {
+    override fun init(context: Context, eventListener: IMultiThreadDownloader.OnDownloaderInitiatedEventListener) {
         if (!initialised) {
             initialised = true
             mExecutor.execute {
@@ -37,6 +37,7 @@ object MultiThreadDownloader : IMultiThreadDownloader {
                 this.downloadFinalizer = DownloadFinalizer(fileManager!!)
                 
                 initDownloadMap()
+                eventListener.onDownloaderInitiated()
             }
         } else {
             throw IllegalStateException()
