@@ -3,6 +3,7 @@ package com.aman_arora.multi_threaded_downloader.viewmodel
 import android.app.Application
 import android.arch.lifecycle.AndroidViewModel
 import android.arch.lifecycle.LiveData
+import com.aman_arora.multi_threaded_downloader.model.Download
 import com.aman_arora.multi_threaded_downloader.repository.DownloadsRepository
 
 class DownloadsViewModel(application: Application?) : AndroidViewModel(application) {
@@ -12,7 +13,7 @@ class DownloadsViewModel(application: Application?) : AndroidViewModel(applicati
         return downloadsRepository.init(getApplication())
     }
 
-    fun download(webAddress: String): Long {
+    fun download(webAddress: String): Download {
         return downloadsRepository.download(webAddress)
     }
 

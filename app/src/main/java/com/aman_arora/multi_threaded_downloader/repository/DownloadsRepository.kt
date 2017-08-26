@@ -23,6 +23,7 @@ class DownloadsRepository: IDownloadsRepository {
                     val download = Download(downloadInfo.id, downloadInfo.webAddress, downloadInfo.threads)
                     download.progressList.addAll(downloadInfo.getThreadProgressMap())
                     download.state = downloadInfo.getState()!!
+                    download.totalProgress.postValue(0f)
                     downloadsMap.put(key, download)
                 }
 
@@ -68,10 +69,10 @@ class DownloadsRepository: IDownloadsRepository {
             val download = downloadsMap[id]
             download?.progressList!![thread-1] = progress
             val totalProgress = (1..download.threads)
-                    .map { download.progressList[it] }
+                    .map { download.progressList[it-1] }
                     .sum()
 
-            download.totalProgress.value = totalProgress
+            download.totalProgress.postValue(totalProgress)
         }
     }
 }

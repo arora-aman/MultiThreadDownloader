@@ -10,8 +10,7 @@ public class Download(val id: Long, val webAddress: String, val threads: Int) {
 
     init {
         for (i in 1..threads) {
-            progressList[i - 1] = 0f
+            progressList.add(0f)
         }
-        totalProgress.value = 0f
     }
 }
