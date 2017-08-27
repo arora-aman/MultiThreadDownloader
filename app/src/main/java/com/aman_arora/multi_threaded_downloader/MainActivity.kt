@@ -12,7 +12,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import com.aman_arora.multi_threaded_downloader.model.Download
-import com.aman_arora.multi_threaded_downloader.repository.DownloadsRepository
 import com.aman_arora.multi_threaded_downloader.viewmodel.DownloadsViewModel
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -27,7 +26,7 @@ class MainActivity : LifecycleActivity() {
 
         downloadsViewModel = ViewModelProviders.of(this).get(DownloadsViewModel::class.java)
 
-        val inited = DownloadsRepository().init(this)
+        val inited = downloadsViewModel!!.init()
 
         inited.observe(this, Observer<Boolean> { value ->
             if (value as Boolean) {
@@ -73,7 +72,7 @@ class MainActivity : LifecycleActivity() {
                 .show()
     }
 
-    inner class DownloadsAdapter(val mDownloads: ArrayList<Download>): BaseAdapter() {
+    inner class DownloadsAdapter(val mDownloads: ArrayList<Download>) : BaseAdapter() {
         override fun getView(position: Int, v: View?, parent: ViewGroup?): View {
             val viewHolder: DownloadViewHolder?
             var view = v
@@ -87,7 +86,7 @@ class MainActivity : LifecycleActivity() {
 
             viewHolder!!.downloadName.text = mDownloads[position].webAddress
 
-            mDownloads[position].totalProgress.observe(this@MainActivity, Observer<Float> {progress ->
+            mDownloads[position].totalProgress.observe(this@MainActivity, Observer<Float> { progress ->
                 if (progress != null) {
                     viewHolder.progressBar.progress = ((progress * 100).toInt())
                 }
@@ -114,7 +113,7 @@ class MainActivity : LifecycleActivity() {
         }
 
         private inner class DownloadViewHolder(view: View) {
-            val downloadName: TextView  = view.findViewById(R.id.download_name)
+            val downloadName: TextView = view.findViewById(R.id.download_name)
             val pause: ImageView = view.findViewById(R.id.pause_control)
             val progressBar: ProgressBar = view.findViewById(R.id.download_progress)
         }
