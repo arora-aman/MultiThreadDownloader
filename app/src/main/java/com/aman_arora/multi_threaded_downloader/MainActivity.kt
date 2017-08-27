@@ -1,16 +1,16 @@
 package com.aman_arora.multi_threaded_downloader
 
+import android.app.AlertDialog
 import android.arch.lifecycle.LifecycleActivity
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.BaseAdapter
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.TextView
+import android.widget.*
 import com.aman_arora.multi_threaded_downloader.model.Download
 import com.aman_arora.multi_threaded_downloader.repository.DownloadsRepository
 import com.aman_arora.multi_threaded_downloader.viewmodel.DownloadsViewModel
@@ -46,11 +46,31 @@ class MainActivity : LifecycleActivity() {
         downloads_list.adapter = adapter
 
         add_download.setOnClickListener {
-            if(count >3) return@setOnClickListener
-            adapter.addDownload(downloadsViewModel!!.download(downloadUrlList[count]))
-            count++
+            showAddDownload()
         }
+    }
 
+    fun showAddDownload() {
+        val view = layoutInflater.inflate(R.layout.dialog_add_download, null)
+        val downloadName = view.findViewById<EditText>(R.id.download_url)
+        val startDownload = view.findViewById<Button>(R.id.start_download)
+        val downloadLocation = view.findViewById<RelativeLayout>(R.id.download_location_layout)
+        downloadName.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(text: Editable?) {
+            }
+
+            override fun beforeTextChanged(text: CharSequence?, p1: Int, p2: Int, p3: Int) {
+
+            }
+
+            override fun onTextChanged(text: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                downloadLocation.visibility = if (downloadsViewModel!!.isValidUrl(text.toString())) View.VISIBLE else View.GONE
+            }
+        })
+
+        AlertDialog.Builder(this)
+                .setView(view)
+                .show()
     }
 
     inner class DownloadsAdapter(val mDownloads: ArrayList<Download>): BaseAdapter() {
